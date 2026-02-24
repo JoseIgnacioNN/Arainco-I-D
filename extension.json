@@ -1,0 +1,14 @@
+{
+    "builtin": "False",
+    "default_enabled": "True",
+    "type": "extension",
+    "rocket_mode_compatible": "False",
+    "name": "Arainco-I-D",
+    "description": "Extensions for Arainco",
+    "author": "Arainco",
+    "author_profile": "",
+    "url": "https://github.com/JoseIgnacioNN/Arainco-I-D",
+    "website": "",
+    "image": "",
+    "dependencies": []
+}
