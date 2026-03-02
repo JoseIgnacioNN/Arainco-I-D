@@ -24,7 +24,7 @@ except OperationCanceledException:
 rebar_types = DB.FilteredElementCollector(doc).OfClass(DB.Structure.RebarBarType).WhereElementIsElementType().ToElements() # Lista de barras (Objeto)   
 rebar_types_names = [rt.get_Parameter(DB.BuiltInParameter.SYMBOL_NAME_PARAM).AsString() for rt in rebar_types] # Lista de barras (Nombre)
 rebar_selected = forms.SelectFromList.show(rebar_types_names, title='Selecciona el diámetro de barra', button_name="Seleccionar") # Formulario con nombre de barras
-rebar_selected = next((x for x, y in zip(rebar_types, rebar_types_names) if y == rebar_selected), None) # Se encuentra el Tipo de Barra asociado al nombre seleccionado
+rebar_selected = next((x for x, y in zip(rebar_types, rebar_types_names) if y == rebar_selected), None) # Encuentra el tipo de barra (objeto) asociado al nombre seleccionado
 
 
 # ===================================================================================
@@ -46,7 +46,9 @@ except OperationCanceledException:
 # Para este ejemplo, crearemos una línea basada en la ubicación de la losa.
 # Usamos el BoundingBox para asegurar que la barra quede DENTRO de la losa.
 bbox = slab.get_BoundingBox(None)
-center = (bbox.Min + bbox.Max) / 2.0 
+center = (bbox.Min + bbox.Max) / 2.0
+print(bbox.min) 
+print(bbox.max) 
 
 # Crear una línea de 1 metro (aprox 3.28 pies) en el centro de la losa
 p1 = DB.XYZ(center.X, center.Y, center.Z)
