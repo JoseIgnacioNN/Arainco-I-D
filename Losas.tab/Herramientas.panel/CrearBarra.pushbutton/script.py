@@ -20,11 +20,11 @@ except OperationCanceledException:
 # 2. CONSEGUIR TIPOS NECESARIOS (BarType y HookType)
 # ===================================================================================
 
-# Obtenemos el primer tipo de barra disponible en el proyecto
+# Obtenemos el tipo de barra disponible en el proyecto
 rebar_types = DB.FilteredElementCollector(doc).OfClass(DB.Structure.RebarBarType).WhereElementIsElementType().ToElements() # Lista de barras (Objeto)   
 rebar_types_names = [rt.get_Parameter(DB.BuiltInParameter.SYMBOL_NAME_PARAM).AsString() for rt in rebar_types] # Lista de barras (Nombre)
 rebar_selected = forms.SelectFromList.show(rebar_types_names, title='Selecciona el diámetro de barra', button_name="Seleccionar") # Formulario con nombre de barras
-hook_type = None # Tipo de gancho
+rebar_selected = next((x for x, y in zip(rebar_types, rebar_types_names) if y == rebar_selected), None) # Se encuentra el Tipo de Barra asociado al nombre seleccionado
 
 
 # ===================================================================================
@@ -47,7 +47,6 @@ except OperationCanceledException:
 # Usamos el BoundingBox para asegurar que la barra quede DENTRO de la losa.
 bbox = slab.get_BoundingBox(None)
 center = (bbox.Min + bbox.Max) / 2.0 
-print(bbox.Min)
 
 # Crear una línea de 1 metro (aprox 3.28 pies) en el centro de la losa
 p1 = DB.XYZ(center.X, center.Y, center.Z)
@@ -75,7 +74,7 @@ with revit.Transaction("Crear Barra"):
             doc,
             DB.Structure.RebarStyle.Standard,
             rebar_selected,
-            None, # Sin gancho al inicio (puedes poner hook_type)
+            None, # Sin gancho al inicio
             None, # Sin gancho al final
             slab, # El anfitrión (Losa)
             normal_vector,
