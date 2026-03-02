@@ -47,8 +47,8 @@ except OperationCanceledException:
 # Usamos el BoundingBox para asegurar que la barra quede DENTRO de la losa.
 bbox = slab.get_BoundingBox(None)
 center = (bbox.Min + bbox.Max) / 2.0
-print(bbox.min) 
-print(bbox.max) 
+print(bbox.Min) 
+print(bbox.Max) 
 
 # Crear una línea de 1 metro (aprox 3.28 pies) en el centro de la losa
 p1 = DB.XYZ(center.X, center.Y, center.Z)
