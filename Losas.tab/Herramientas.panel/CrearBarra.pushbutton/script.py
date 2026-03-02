@@ -38,20 +38,14 @@ try:
 except OperationCanceledException:
     forms.alert("Selección de puntos cancelada.", exitscript=True)
 
-print(picked_p1.X)
 
 # ===================================================================================
 # 3. DEFINIR LA GEOMETRÍA
 # ===================================================================================
 
-# Para este ejemplo, crearemos una línea basada en la ubicación de la losa.
-# Usamos el BoundingBox para asegurar que la barra quede DENTRO de la losa.
-bbox = slab.get_BoundingBox(None)
-center = (bbox.Min + bbox.Max) / 2.0
-
-# Crear una línea de 1 metro (aprox 3.28 pies) en el centro de la losa
-p1 = DB.XYZ(center.X, center.Y, center.Z)
-p2 = DB.XYZ(center.X + 3.28, center.Y, center.Z) # +1 metro en X
+# Crear una línea
+p1 = DB.XYZ(picked_p1.X, picked_p1.Y, 409.6)
+p2 = DB.XYZ(picked_p2.X, picked_p2.Y, 409.6)
 
 # Las curvas deben estar en una lista de Python o .NET
 curves = [DB.Line.CreateBound(p1, p2)]
