@@ -38,7 +38,7 @@ try:
 except OperationCanceledException:
     forms.alert("Selección de puntos cancelada.", exitscript=True)
 
-print(picked_p1.X)
+#print(picked_p1.X)
 
 # ===================================================================================
 # 3. DEFINIR LA GEOMETRÍA
