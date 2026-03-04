@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-from pyrevit import revit, ui
+from pyrevit import revit, forms  # Cambiamos ui por forms
 import urllib2
 import json
 from System.Net import ServicePointManager, SecurityProtocolType
 
-# Habilitar protocolo de seguridad moderno
+# Habilitar TLS 1.2 para conexión segura con Notion
 ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12
 
 # --- CONFIGURACIÓN ---
@@ -26,27 +26,29 @@ def post_to_notion(data):
         response = urllib2.urlopen(req)
         return True
     except urllib2.HTTPError as e:
-        error_msg = e.read()
-        print("Error de Notion API: {}".format(error_msg))
+        print("Error de Notion API: {}".format(e.read()))
         return False
     except Exception as e:
         print("Error de conexión: {}".format(e))
         return False
 
 # --- LÓGICA DE REVIT ---
+# Obtenemos la selección actual
 selection = revit.get_selection()
 
 if not selection:
-    ui.alert("Por favor, selecciona al menos un elemento en Revit.")
+    # Usamos forms.alert en lugar de ui.alert
+    forms.alert("Por favor, selecciona al menos un elemento en Revit.")
 else:
     for el in selection:
-        # Forma segura de obtener el nombre en pyRevit
+        # Obtenemos el nombre del elemento
         try:
             name = revit.query.get_name(el)
         except:
             name = "Elemento sin nombre"
             
-        el_id = str(el.Id.ToString()) # El ID como string simple
+        # ID numérico limpio
+        el_id = str(el.Id.IntegerValue)
 
         payload = {
             "parent": {"database_id": DATABASE_ID},
@@ -61,4 +63,4 @@ else:
         }
         
         if post_to_notion(payload):
-            print("Éxito: [{}] enviado a Notion.".format(name))
+            print("Éxito: Elemento [{}] enviado.".format(name))
