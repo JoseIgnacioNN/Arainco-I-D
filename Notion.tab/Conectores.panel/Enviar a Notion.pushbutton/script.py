@@ -3,7 +3,6 @@ from pyrevit import revit, ui
 import urllib2
 import json
 
-# --- CONFIGURACIÓN DE NOTION ---
 NOTION_TOKEN = "TU_TOKEN_AQUÍ"
 DATABASE_ID = "ID_DE_TU_BASE_DE_DATOS"
 
@@ -16,12 +15,19 @@ def post_to_notion(data):
         "Notion-Version": "2022-06-28"
     }
 
-    req = urllib2.Request(url, data=json.dumps(data), headers=headers)
+    # IMPORTANTE: Convertir a JSON y luego a bytes
+    json_payload = json.dumps(data).encode('utf-8')
+
     try:
-        urllib2.urlopen(req)
+        req = urllib2.Request(url, data=json_payload, headers=headers)
+        response = urllib2.urlopen(req)
         return True
+    except urllib2.HTTPError as e:
+        # Esto te dirá el error real de la API de Notion (ej. columna inexistente)
+        print("Error de Notion API: {}".format(e.read()))
+        return False
     except Exception as e:
-        print("Error enviando a Notion: {}".format(e))
+        print("Error general: {}".format(e))
         return False
 
 
@@ -29,14 +35,13 @@ def post_to_notion(data):
 selection = revit.get_selection()
 
 if not selection:
-    ui.alert("Por favor, selecciona al menos un elemento.")
+    ui.alert("Por favor, selecciona al menos un elemento en Revit.")
 else:
     for el in selection:
-        name = el.Name
-        el_id = str(el.Id)
+        # Obtenemos el nombre del tipo o de la instancia
+        name = revit.query.get_name(el)
+        el_id = str(el.Id.IntegerValue)  # Usamos el Integer para que sea un ID limpio
 
-        # Estructura del JSON para Notion
-        # Asumiendo que tu tabla tiene columnas: "Nombre" (Title) e "ID Revit" (Rich Text)
         payload = {
             "parent": {"database_id": DATABASE_ID},
             "properties": {
@@ -50,4 +55,4 @@ else:
         }
 
         if post_to_notion(payload):
-            print("Elemento {} enviado con éxito.".format(name))
+            print("Éxito: Elemento [{}] enviado.".format(el_id))
