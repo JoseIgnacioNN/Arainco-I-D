@@ -23,7 +23,7 @@ class FormularioMultiseleccion(WinForms.Form):
         fuente_label = Font("Arial", 10, FontStyle.Bold)
 
         # 1. Descripción
-        lbl_desc = WinForms.Label(Text="Descripción:", Location=Point(25, 15), Size=Size(300, 20))
+        lbl_desc = WinForms.Label(Text="Descripción:", Location=Point(25, 15), Size=Size(300, 40))
         lbl_desc.Font = fuente_label
         self.txt_desc = WinForms.TextBox(Location=Point(25, 40), Size=Size(310, 25))
 
