@@ -1,43 +1,41 @@
 # -*- coding: utf-8 -*-
 from pyrevit import forms
 
-# 1. Definición de las opciones para los desplegables (Dropdowns)
+# 1. Opciones para los menús desplegables
 opciones_disciplina = ['Arquitectura', 'Estructura']
 opciones_estado = ['Abierto', 'En revisión', 'Resuelto', 'Cerrado']
 
-# 2. Construcción del Formulario Flexible
+# 2. Definición de componentes usando la sintaxis compatible
+# Importamos los controles directamente para evitar el error 'module has no attribute controls'
+from pyrevit.forms import FlexForm, Label, TextBox, ComboBox, Button
+
 components = [
-    # Campo de texto para la descripción
-    forms.controls.Label("Descripción del hallazgo:"),
-    forms.controls.TextBox("descripcion", default="Escribe aquí..."),
+    Label("Descripción del hallazgo:"),
+    TextBox("descripcion", default="Escribe aquí..."),
     
-    # Selector para Disciplina
-    forms.controls.Label("Selecciona la Disciplina:"),
-    forms.controls.ComboBox("disciplina", opciones_disciplina),
+    Label("Selecciona la Disciplina:"),
+    ComboBox("disciplina", opciones_disciplina),
     
-    # Selector para Estado
-    forms.controls.Label("Estado actual:"),
-    forms.controls.ComboBox("estado", opciones_estado),
+    Label("Estado actual:"),
+    ComboBox("estado", opciones_estado),
     
-    # Botón de acción
-    forms.controls.Button("Aceptar")
+    Button("Aceptar")
 ]
 
 # 3. Lanzar la ventana
-form = forms.FlexForm("Formulario de Información", components)
+form = FlexForm("Formulario de Extracción", components)
 form.show_dialog()
 
-# 4. Procesar los resultados
-# El diccionario 'form.values' contiene lo que el usuario ingresó/seleccionó
+# 4. Procesar y mostrar los resultados
 if form.values:
-    res_descripcion = form.values.get("descripcion")
-    res_disciplina = form.values.get("disciplina")
-    res_estado = form.values.get("estado")
+    # Extraemos los valores del diccionario
+    desc = form.values.get("descripcion")
+    disc = form.values.get("disciplina")
+    est = form.values.get("estado")
 
-    # Mostrar resumen de lo capturado
-    print("--- INFORMACIÓN CAPTURADA ---")
-    print("Descripción: {}".format(res_descripcion))
-    print("Disciplina:  {}".format(res_disciplina))
-    print("Estado:      {}".format(res_estado))
+    print("--- DATOS CAPTURADOS ---")
+    print("Descripción: {}".format(desc))
+    print("Disciplina:  {}".format(disc))
+    print("Estado:      {}".format(est))
 else:
-    print("Operación cancelada por el usuario.")
+    print("Operación cancelada.")
