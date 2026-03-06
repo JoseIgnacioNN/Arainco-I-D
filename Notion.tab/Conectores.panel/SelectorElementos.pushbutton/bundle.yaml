@@ -1,0 +1,5 @@
+title: Selector Elementos
+tooltip: Selecciona elementos manualmente en el modelo y genera un reporte con sus propiedades (ID, Categoría, Familia, Tipo, Nivel).
+author: pyRevit
+min_revit_ver: 2020
+max_revit_ver: 2026
