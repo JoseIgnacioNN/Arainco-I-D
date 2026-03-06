@@ -1,85 +1,89 @@
 # -*- coding: utf-8 -*-
 import clr
-# Referencias básicas de Windows
-clr.AddReference('IronPython.Wpf')
-clr.AddReference('PresentationFramework')
-clr.AddReference('PresentationCore')
+# Referencias directas al núcleo de Windows
+clr.AddReference("System.Windows.Forms")
+clr.AddReference("System.Drawing")
 
-import System.IO
-from System import Windows
-import wpf
+from System.Windows.Forms import (Application, Form, Label, TextBox, 
+                                  ComboBox, Button, DockStyle, Padding)
+from System.Drawing import Size, Point, Font, FontStyle
 
 from pyrevit import revit
 from Autodesk.Revit.UI.Selection import ObjectType
 
-# 1. DISEÑO DE LA INTERFAZ (XAML)
-# He simplificado el diseño para asegurar compatibilidad total
-xaml_code = """
-<Window xmlns="http://schemas.microsoft.com/winfx/2000/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2000/xaml"
-        Title="Formulario de Extracción" Height="350" Width="300" 
-        WindowStartupLocation="CenterScreen" Topmost="True">
-    <StackPanel Margin="20">
-        <TextBlock Text="Descripción:" Margin="0,0,0,5" FontWeight="Bold"/>
-        <TextBox x:Name="txt_desc" Height="25" Margin="0,0,0,15"/>
-
-        <TextBlock Text="Disciplina:" Margin="0,0,0,5" FontWeight="Bold"/>
-        <ComboBox x:Name="cb_disciplina" Height="25" Margin="0,0,0,15"/>
-
-        <TextBlock Text="Estado:" Margin="0,0,0,5" FontWeight="Bold"/>
-        <ComboBox x:Name="cb_estado" Height="25" Margin="0,0,0,15"/>
-
-        <Button Content="Aceptar y Seleccionar" Height="40" Click="aceptar_click"/>
-    </StackPanel>
-</Window>
-"""
-
-# 2. LÓGICA DE LA VENTANA
-class MiFormulario(Windows.Window):
+class FormularioResistente(Form):
     def __init__(self):
-        # Cargamos el XAML usando el lector nativo de System.IO
-        reader = System.IO.StringReader(xaml_code)
-        wpf.LoadComponent(self, reader)
-        
-        # Llenamos los desplegables manualmente
-        self.cb_disciplina.ItemsSource = ['Arquitectura', 'Estructura']
-        self.cb_estado.ItemsSource = ['Abierto', 'En revision', 'Resuelto', 'Cerrado']
+        self.Text = "Extracción de Datos"
+        self.Size = Size(350, 400)
+        self.Padding = Padding(20)
+        self.StartPosition = Windows.Forms.FormStartPosition.CenterScreen
+        self.TopMost = True
         self.datos = None
 
+        # --- CONTROLES ---
+        # Descripción
+        lbl_desc = Label(Text="Descripción:", Location=Point(20, 20), Size=Size(250, 20))
+        lbl_desc.Font = Font(lbl_desc.Font, FontStyle.Bold)
+        self.txt_desc = TextBox(Location=Point(20, 45), Size=Size(280, 25))
+
+        # Disciplina
+        lbl_disc = Label(Text="Disciplina:", Location=Point(20, 90), Size=Size(250, 20))
+        lbl_disc.Font = Font(lbl_disc.Font, FontStyle.Bold)
+        self.cb_disc = ComboBox(Location=Point(20, 115), Size=Size(280, 25), DropDownStyle=Windows.Forms.ComboBoxStyle.DropDownList)
+        self.cb_disc.Items.AddRange(('Arquitectura', 'Estructura'))
+
+        # Estado
+        lbl_est = Label(Text="Estado:", Location=Point(20, 160), Size=Size(250, 20))
+        lbl_est.Font = Font(lbl_est.Font, FontStyle.Bold)
+        self.cb_est = ComboBox(Location=Point(20, 185), Size=Size(280, 25), DropDownStyle=Windows.Forms.ComboBoxStyle.DropDownList)
+        self.cb_est.Items.AddRange(('Abierto', 'En revisión', 'Resuelto', 'Cerrado'))
+
+        # Botón
+        btn = Button(Text="Aceptar y Seleccionar", Location=Point(20, 260), Size=Size(280, 45))
+        btn.Click += self.aceptar_click
+
+        # Agregar controles a la ventana
+        self.Controls.Add(lbl_desc)
+        self.Controls.Add(self.txt_desc)
+        self.Controls.Add(lbl_disc)
+        self.Controls.Add(self.cb_disc)
+        self.Controls.Add(lbl_est)
+        self.Controls.Add(self.cb_est)
+        self.Controls.Add(btn)
+
     def aceptar_click(self, sender, e):
-        # Guardamos la selección del usuario
+        # Guardar info y cerrar
         self.datos = {
             'desc': self.txt_desc.Text,
-            'disc': self.cb_disciplina.SelectedItem,
-            'est': self.cb_estado.SelectedItem
+            'disc': self.cb_disc.SelectedItem,
+            'est': self.cb_est.SelectedItem
         }
-        self.DialogResult = True
+        self.DialogResult = Windows.Forms.DialogResult.OK
         self.Close()
 
-# 3. FUNCIÓN PRINCIPAL
 def ejecutar():
-    form = MiFormulario()
-    # Mostramos el formulario
-    if form.ShowDialog():
-        info = form.datos
+    form = FormularioResistente()
+    # Abrir ventana
+    if form.ShowDialog() == Windows.Forms.DialogResult.OK:
+        d = form.datos
         
         try:
             uidoc = revit.uidoc
-            # Iniciamos la selección en Revit
-            print("Selecciona elementos y presiona 'Finalizar'...")
+            print("Vuelve a Revit y selecciona elementos. Pulsa 'Finalizar' arriba.")
             refs = uidoc.Selection.PickObjects(ObjectType.Element, "Selecciona elementos")
             
-            # Resultado por consola
-            print("\n" + "="*20)
-            print("DATOS CAPTURADOS:")
-            print("Descripción: {}".format(info['desc']))
-            print("Disciplina:  {}".format(info['disc']))
-            print("Estado:      {}".format(info['est']))
+            # Resultado final
+            print("\n" + "="*30)
+            print("EXTRACCIÓN COMPLETADA")
+            print("="*30)
+            print("Descripción: {}".format(d['desc']))
+            print("Disciplina:  {}".format(d['disc']))
+            print("Estado:      {}".format(d['est']))
             print("Elementos:   {}".format(len(refs)))
-            print("="*20)
+            print("="*30)
             
-        except Exception as ex:
-            print("Selección cancelada o terminada.")
+        except Exception:
+            print("Selección cancelada.")
 
 if __name__ == "__main__":
     ejecutar()
