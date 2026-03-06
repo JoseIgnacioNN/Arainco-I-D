@@ -1,17 +1,14 @@
-# -*- coding: utf-8 -*-
 from pyrevit import forms
 
-# Forzamos una salida limpia para ver si el módulo carga
-try:
-    res = forms.ask_for_string(
-        title="Prueba de Texto",
-        prompt="Escribe algo para probar:"
+texto = ""
+while not texto:
+    texto = forms.ask_for_string(
+        title="Configuración de Parámetro",
+        prompt="Introduce el código del proyecto (No puede estar vacío):"
     )
-
-    if res:
-        forms.alert("Escribiste: {}".format(res))
-    else:
-        print("Cancelado por el usuario.")
-
-except Exception as e:
-    print("Error detectado: {}".format(e))
+    if texto is None: # El usuario presionó "Cancelar" o la X
+        script.exit() 
+    
+    texto = texto.strip() # Limpiamos espacios
+    
+print("Texto validado: {}".format(texto))
