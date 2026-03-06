@@ -1,4 +1,11 @@
+# -*- coding: utf-8 -*-
 from pyrevit import forms
+
+# Ahora sí puedes usar tildes en los textos:
+res = forms.ask_for_string(
+    title="Configuración",
+    prompt="Introduce la descripción aquí:"
+)
 
 texto = ""
 while not texto:
