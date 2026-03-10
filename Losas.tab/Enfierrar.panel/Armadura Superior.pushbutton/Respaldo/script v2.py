@@ -21,14 +21,10 @@ except OperationCanceledException:
 # PROPIEDADES DE LA LOSA
 # ===================================================================================
 bbox = slab.get_BoundingBox(None) # Caja geométrica que encierra toda la losa
-Z_inf = bbox.Min.Z # Elevación de cara inferior
-Z_sup = bbox.Max.Z # Elevación de cara superior
+Z_inf = bbox.Min.Z # Cara inferior
+Z_sup = bbox.Max.Z # Cara superior
 e = slab.get_Parameter(DB.BuiltInParameter.FLOOR_ATTR_THICKNESS_PARAM).AsDouble() # Espesor
-
-# Recubrimiento superior
-rec_top_param = slab.get_Parameter(DB.BuiltInParameter.CLEAR_COVER_TOP) # Parámetro del recubrimiento superior
-rec_top_id = rec_top_param.AsElementId() # Id del tipo de recubrimiento
-rec_top = doc.GetElement(rec_top_id).CoverDistance # Recubrimiento
+rec = UnitUtils.ConvertToInternalUnits(1.5, UnitTypeId.Centimeters) # Recubrimiento
 
 # ===================================================================================
 # INDICAR TIPO DE BARRA
@@ -36,22 +32,10 @@ rec_top = doc.GetElement(rec_top_id).CoverDistance # Recubrimiento
 rebar_types = DB.FilteredElementCollector(doc).OfClass(DB.Structure.RebarBarType).WhereElementIsElementType().ToElements() # Lista de barras (Objeto)   
 rebar_types_names = [rt.get_Parameter(DB.BuiltInParameter.SYMBOL_NAME_PARAM).AsString() for rt in rebar_types] # Lista de barras (Nombre)
 rebar_selected = forms.SelectFromList.show(rebar_types_names, title='Selecciona el diámetro de barra', button_name="Seleccionar") # Formulario con nombre de barras
-rebar_fi = float(rebar_selected[1:]) # Diámetro seleccionado
 rebar_selected = next((x for x, y in zip(rebar_types, rebar_types_names) if y == rebar_selected), None) # Encuentra el tipo de barra (objeto) asociado al nombre seleccionado
 if not rebar_selected: # Control de error si cancela el formulario
     forms.alert("No se seleccionó ningún tipo de barra.", exitscript=True)
-
-# ===================================================================================
-# INDICAR ESPACIAMIENTO
-# ===================================================================================
-esp = float(forms.ask_for_string(
-    prompt="Ingresa el espaciamiento en centímetros (ej. 20):", 
-    title="Espaciamiento de la Armadura"))
-if esp>0:
-    esp = UnitUtils.ConvertToInternalUnits(esp, UnitTypeId.Centimeters)
-if not esp:
-    forms.alert("Operación cancelada por el usuario.", exitscript=True)
-
+    
 # ===================================================================================
 # CONFIGURAR PLANO DE TRABAJO
 # ===================================================================================
@@ -91,9 +75,8 @@ L_recorrido = ((p2.X-p1.X)**2+(p2.Y-p1.Y)**2)**0.5
 ang = math.atan2(p2.Y-p1.Y,p2.X-p1.X)
 
 # Geometría de la barra
-Z = Z_sup - rec_top - UnitUtils.ConvertToInternalUnits(rebar_fi/2, UnitTypeId.Millimeters)
-p_start = DB.XYZ(p1.X-L1*math.sin(ang), p1.Y+L1*math.cos(ang), Z) # Punto inicial de la barra
-p_end = DB.XYZ(p1.X+L2*math.sin(ang), p1.Y-L2*math.cos(ang), Z) # Punto final de la barra
+p_start = DB.XYZ(p1.X-L1*math.sin(ang), p1.Y+L1*math.cos(ang), Z_sup-rec) # Punto inicial de la barra
+p_end = DB.XYZ(p1.X+L2*math.sin(ang), p1.Y-L2*math.cos(ang), Z_sup-rec) # Punto final de la barra
 curves = [DB.Line.CreateBound(p_start, p_end)] # Las puntos deben estar en una lista
 
 # ===================================================================================
@@ -116,8 +99,10 @@ with revit.Transaction("Crear Barra"):
             True,True) # Usar Rebar Shape existente. Si no existe Rebar Shape que coincida, Revit creará un Rebar Shape personalizado
 
 # Rebar Set
-        N_barras = math.floor(L_recorrido/esp+1)
-        rebar.GetShapeDrivenAccessor().SetLayoutAsNumberWithSpacing(
+        esp = UnitUtils.ConvertToInternalUnits(20, UnitTypeId.Centimeters)
+        N_barras = math.ceil(L_recorrido/esp)
+        accessor = rebar.GetShapeDrivenAccessor() # Obtenemos el controlador de la barra
+        accessor.SetLayoutAsNumberWithSpacing(
             N_barras,   # Número de barras
             esp,  # Espaciamiento
             True, True, True)   # True = Distribuye hacia la derecha de la línea. Incluir barra inicial. Incluir barra final.
