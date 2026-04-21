@@ -3,7 +3,7 @@ from Autodesk.Revit import DB
 from Autodesk.Revit import UI
 from Autodesk.Revit.DB import UnitUtils, UnitTypeId
 from Autodesk.Revit.Exceptions import OperationCanceledException
-from pyrevit import revit, forms
+from pyrevit import revit, forms, script
 from System.Collections.Generic import List
 import math
 doc = revit.doc
@@ -31,14 +31,42 @@ rec_top_param = slab.get_Parameter(DB.BuiltInParameter.CLEAR_COVER_TOP) # Parám
 rec_top = doc.GetElement(rec_top_param.AsElementId()).CoverDistance # Recubrimiento
 
 # ===================================================================================
-# INDICAR TIPO DE BARRA
+# INDICAR TIPO DE BARRA (USANDO FORMULARIO XAML)
 # ===================================================================================
-rebar_types = DB.FilteredElementCollector(doc).OfClass(DB.Structure.RebarBarType).WhereElementIsElementType().ToElements() # Lista de barras (Objeto)   
+rebar_types = DB.FilteredElementCollector(doc).OfClass(DB.Structure.RebarBarType).WhereElementIsElementType().ToElements() # Lista de barras (Objeto)
 rebar_types_names = [rt.get_Parameter(DB.BuiltInParameter.SYMBOL_NAME_PARAM).AsString() for rt in rebar_types] # Lista de barras (Nombre)
-rebar_selected = forms.SelectFromList.show(rebar_types_names, title='Selecciona el diámetro de barra', button_name="Seleccionar") # Formulario con nombre de barras
-rebar_selected = next((x for x, y in zip(rebar_types, rebar_types_names) if y == rebar_selected), None) # Encuentra el tipo de barra (objeto) asociado al nombre seleccionado
 
-if not rebar_selected: # Control de error si cancela el formulario
+# Ruta del archivo XAML en la misma carpeta del script
+xaml_path = script.get_script_path() + r'\ArmaduraSuperiorLosas.xaml'
+
+
+class ArmaduraSuperiorLosaWindow(forms.WPFWindow):
+    def __init__(self, xaml_file, barras_nombres):
+        self._barras_nombres = barras_nombres
+        forms.WPFWindow.__init__(self, xaml_file)
+
+        # Poblar los combos de diámetros
+        self.DiametroPrincipalComboBox.ItemsSource = self._barras_nombres
+        self.DiametroSecundarioComboBox.ItemsSource = self._barras_nombres
+
+    def AplicarRecorridoButton_Click(self, sender, args):
+        # Cerrar solo si se ha seleccionado al menos un diámetro principal
+        if not self.DiametroPrincipalComboBox.SelectedItem:
+            forms.alert("Selecciona un diámetro de barra principal.")
+            return
+        self.Close()
+
+
+win = ArmaduraSuperiorLosaWindow(xaml_path, rebar_types_names)
+resultado = win.show_dialog()
+
+if not resultado or not win.DiametroPrincipalComboBox.SelectedItem:
+    forms.alert("Operación cancelada por el usuario.", exitscript=True)
+
+rebar_selected_name = win.DiametroPrincipalComboBox.SelectedItem
+rebar_selected = next((x for x, y in zip(rebar_types, rebar_types_names) if y == rebar_selected_name), None) # Encuentra el tipo de barra (objeto) asociado al nombre seleccionado
+
+if not rebar_selected:
     forms.alert("No se seleccionó ningún tipo de barra.", exitscript=True)
 
 rebar_fi = rebar_selected.get_Parameter(DB.BuiltInParameter.REBAR_BAR_DIAMETER).AsDouble() # Diámetro seleccionado
